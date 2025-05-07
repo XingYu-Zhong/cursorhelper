@@ -1,0 +1,31 @@
+#base
+# libcst
+pytest
+tqdm
+jsonlines
+python-dotenv
+matplotlib
+llama_index==0.10.65
+openai
+chardet==3.0.4
+tree_sitter_languages==1.10.2
+tree-sitter==0.21.3
+#webui
+gitpython
+chainlit
+#data
+pandas
+pyarrow 
+fastparquet
+# #localembedding
+# sentence_transformers
+# ##local rerank model
+# FlagEmbedding
+# peft
+# sentencepiece
+# #vllm
+# flash_attn==2.4.2
+# torch==2.1.0
+# accelerate==0.28.0
+# transformers==4.39.2 
+# vllm==0.5.3
