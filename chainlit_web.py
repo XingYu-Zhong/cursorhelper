@@ -17,21 +17,6 @@ client = OpenaiApi(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPEN
 
 @cl.on_chat_start
 async def start():
-    settings = await cl.ChatSettings(
-        [
-            Slider(
-                id="max_question_times",
-                label="最大提问次数 (基于已有项目)",
-                initial=2,
-                min=1,
-                max=10,
-                step=1,
-            )
-        ]
-    ).send()
-    max_question_times_value = settings["max_question_times"]
-    cl.user_session.set("max_question_times", max_question_times_value)
-
     res = await cl.AskActionMessage(
         content="请选择哪种方式开发",
         actions=[
@@ -53,8 +38,23 @@ async def handle_new():
     await cl.Message(content="您选择了新开发项目").send()
     # 发送初始消息
     msg = await cl.AskUserMessage(content="你希望开发一个什么样的项目？可以先告诉我你的想法，然后我再根据你的想法进行针对性的提问！", timeout=36000).send()
-    max_question_times = cl.user_session.get("max_question_times")
-    question_agent = QuestionAgent(max_question_times=max_question_times,is_old=False)
+    
+    # 询问最大提问次数
+    max_q_res = await cl.AskActionMessage(
+        content="您希望我最多进行几轮提问来澄清您的需求？",
+        actions=[
+            cl.Action(name="2_questions", payload={"value": 2}, label="2轮"),
+            cl.Action(name="4_questions", payload={"value": 4}, label="4轮"),
+            cl.Action(name="8_questions", payload={"value": 8}, label="8轮"),
+        ],
+        timeout=36000
+    ).send()
+
+    max_question_times = 2  # 默认值
+    if max_q_res and max_q_res.get("payload"):
+        max_question_times = int(max_q_res.get("payload").get("value"))
+
+    question_agent = QuestionAgent(max_question_times=max_question_times, is_old=False)
     end_type = 0
     user_responses = []
     
@@ -116,7 +116,22 @@ async def handle_old():
                 ml = MainLab("qwen-max","text-embedding-v3")
                 # 发送初始消息
                 msg = await cl.AskUserMessage(content="你希望对当前项目进行哪些方面的优化或者修改？可以先告诉我你的想法，然后我再根据你的想法进行针对性的提问！", timeout=36000).send()
-                max_question_times = cl.user_session.get("max_question_times")
+                
+                # 询问最大提问次数
+                max_q_res_old = await cl.AskActionMessage(
+                    content="您希望我最多进行几轮提问来分析您的项目和需求？",
+                    actions=[
+                        cl.Action(name="2_questions_old", payload={"value": 2}, label="2轮"),
+                        cl.Action(name="4_questions_old", payload={"value": 4}, label="4轮"),
+                        cl.Action(name="8_questions_old", payload={"value": 8}, label="8轮"),
+                    ],
+                    timeout=36000
+                ).send()
+
+                max_question_times = 2  # 默认值
+                if max_q_res_old and max_q_res_old.get("payload"):
+                    max_question_times = int(max_q_res_old.get("payload").get("value"))
+                
                 question_agent = QuestionAgent(max_question_times,True)
                 end_type = 0
                 user_responses = []
