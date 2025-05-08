@@ -30,7 +30,7 @@ auto_tag_thread = true
 
 # Authorize users to spontaneously upload files with messages
 [features.spontaneous_file_upload]
-    enabled = true
+    enabled = false
     accept = ["*/*"]
     max_files = 20
     max_size_mb = 500
@@ -51,10 +51,10 @@ auto_tag_thread = true
 
 [UI]
 # Name of the assistant.
-name = "Assistant"
+name = "Cursor Helper"
 
 # Description of the assistant. This is used for HTML tags.
-# description = ""
+description = "一个帮助cursor更了解你开发需求的插件"
 
 # Large size content are by default collapsed for a cleaner ui
 default_collapse_content = true
@@ -77,7 +77,7 @@ hide_cot = false
 # custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
 
 # Specify a custom meta image url.
-# custom_meta_image_url = "https://chainlit-cloud.s3.eu-west-3.amazonaws.com/logo/chainlit_banner.png"
+custom_meta_image_url = "/public/image.png"
 
 # Specify a custom build directory for the frontend.
 # This can be used to customize the frontend code.
