@@ -21,8 +21,8 @@
     *   **自然语言理解与生成**：利用如 `qwen-plus` 和 `qwen-max` 等先进的 LLM，实现对用户输入的深度理解、智能提问以及开发计划的自动生成。
     *   **文本嵌入**：通过 `text-embedding-v3` 等模型，将文本信息（如用户需求、代码片段）转化为向量表示，为后续的语义理解和信息检索提供支持。
     *   **智能代理 (Agent)**：`QuestionAgent` 和 `PlanAgent` 的设计，使得 AI 能够有策略地进行信息收集和任务规划。
-*   **OceanBase 数据库 (推测)**：
-    *   **高效信息检索**：在处理现有项目时，应用提示"正在通过oceanbase检索项目信息..."。这表明 OceanBase 可能被用于存储和检索代码库的元数据、代码片段的嵌入向量或分析结果。
+*   **OceanBase 数据库**：
+    *   **高效信息检索**：在处理现有项目时，应用提示"正在通过oceanbase检索项目信息..."。这表明 OceanBase 用于存储和检索代码库的元数据、代码片段的嵌入向量。
     *   **RAG (Retrieval Augmented Generation)**：结合 OceanBase 的数据存储和检索能力与 LLM 的生成能力，可以实现对现有代码库的深度分析和智能问答。当用户询问关于现有项目的问题时，系统可以从 OceanBase 中检索相关上下文信息，辅助 LLM 生成更准确、更具针对性的回答。
     *   **可扩展性与可靠性**：对于需要处理大量项目数据或高并发用户请求的场景，OceanBase 的分布式架构能提供良好的可扩展性和数据可靠性。
 
@@ -33,14 +33,14 @@
 *   **用户界面 (UI)**：Chainlit (`chainlit as cl`)，提供异步的、基于消息的交互。
 *   **核心逻辑层**：Python。
     *   **LLM 交互模块**：`llm.api.func_get_openai.OpenaiApi` 类封装了对大语言模型（如 `qwen-plus`）的 API 调用。
-    *   **核心分析模块 (`MainLab`)**：`lab.mainlab.MainLab` 类，使用 `qwen-max` 模型和 `text-embedding-v3` 嵌入模型，负责处理与项目代码库相关的分析和问答，尤其在"基于已有项目"的场景下，通过 `ml.run_lab(question, repo_path)` 实现。此模块很可能与 OceanBase 数据库集成，用于信息检索。
+    *   **核心分析模块 (`MainLab`)**：`lab.mainlab.MainLab` 类，使用 `qwen-max` 模型和 `text-embedding-v3` 嵌入模型，负责处理与项目代码库相关的分析和问答，尤其在"基于已有项目"的场景下，通过 `ml.run_lab(question, repo_path)` 实现。此模块与 OceanBase 数据库集成，用于信息检索。
     *   **智能代理 (`Agent`)**：
         *   `QuestionAgent`: 负责根据用户输入和当前对话状态，动态生成引导性问题，以收集充分的项目需求或分析点。
         *   `PlanAgent`: 负责基于 `QuestionAgent` 收集到的完整信息，生成结构化的开发计划。
     *   **工具模块 (`utils.tools`)**：
         *   `clone_repo`: 用于从 GitHub 克隆项目仓库。
         *   `get_directory_structure`: 用于解析项目的文件目录结构。
-*   **数据持久化/检索 (推测)**：OceanBase，用于存储项目代码分析结果、嵌入向量等，支持 `MainLab` 的信息检索功能。
+*   **数据持久化/检索**：OceanBase，用于存储项目代码分析结果、嵌入向量等，支持 `MainLab` 的信息检索功能。
 
 ### 2.2 技术栈
 *   **编程语言**: Python
@@ -76,12 +76,12 @@
     *   `get_directory_structure(repo_path, notallow_dict)` 解析项目目录结构。
 4.  **项目分析与交互 (`MainLab`, `QuestionAgent`)**:
     *   用户输入初步的优化或修改想法。
-    *   `QuestionAgent` 初始化 (`is_old=True`)。
+    *   `QuestionAgent` 初始化。
     *   初始用户消息会附加上项目目录结构信息。
     *   在提问循环中：
         *   `question_agent.get_question(user_msg)` 生成针对当前项目的问题。
         *   系统显示"正在通过oceanbase检索项目信息..."。
-        *   `ml.run_lab(question, repo_path)` (其中 `ml` 是 `MainLab` 实例) 被调用，这很可能是利用项目路径和当前问题，结合 OceanBase 中的数据进行检索和分析，生成上下文信息。
+        *   `ml.run_lab(question, repo_path)` (其中 `ml` 是 `MainLab` 实例) 被调用，这是利用项目路径和当前问题，结合 OceanBase 中的数据进行检索和分析，生成上下文信息。
         *   `run_lab` 的流式输出作为 `user_msg` 输入到下一轮 `QuestionAgent` 的 `get_question` 中，或直接展示给用户。
 5.  **历史信息整合**：`question_agent.get_history_str()` 获取完整的对话历史（包含项目分析的问答）。
 6.  **开发计划生成 (`PlanAgent`)**：
@@ -191,8 +191,8 @@ await msg.update()
     *   `max_question_times` 参数可能用于限制提问轮次，避免无限循环。
     *   `is_old` 参数区分了新项目和现有项目场景，可能会导致 LLM 使用不同的提示词或策略来生成问题。
 
-*   **RAG 结合 OceanBase (`MainLab` - 推测)**:
-    *   **数据预处理 (推测)**: 当克隆一个现有项目后，项目代码和相关文档可能被分块、计算嵌入向量，并与原文一同存储在 OceanBase 中。
+*   **RAG 结合 OceanBase**:
+    *   **数据预处理**: 当克隆一个现有项目后，项目代码和相关文档被分块、计算嵌入向量，并与原文一同存储在 OceanBase 中。
     *   **检索**: 当 `ml.run_lab(question, repo_path)`被调用时：
         1.  用户的问题 (`question`) 可能被转换为嵌入向量。
         2.  使用此向量在 OceanBase 中进行相似性搜索，找出相关的代码片段或文档块。
@@ -205,13 +205,12 @@ await msg.update()
 
 ## 4. 测试与验证
 
-(本部分基于通用实践推断，因为 `chainlit_web.py` 未包含测试代码。)
 
 ### 4.1 测试环境设置
-*   **本地开发环境**: Python 环境，安装所有 `requirements.txt` 中列出的依赖。配置好 `OPENAI_API_KEY`, `OPENAI_API_BASE_URL` 等环境变量。如果使用了 OceanBase，需要本地或远程的 OceanBase 实例，并配置连接参数。
+*   **本地开发环境**: Python 环境，安装所有 `requirements.txt` 中列出的依赖。配置好 `OPENAI_API_KEY`, `OPENAI_API_BASE_URL` 等环境变量。需要远程的 OceanBase 实例，并配置连接参数。
 *   **模拟服务**: 对于外部依赖（如 OpenAI API, GitHub），在测试时可能需要使用模拟服务（Mocks）来隔离测试单元并确保测试的确定性。
 
-### 4.2 测试用例 (建议)
+### 4.2 测试用例
 
 #### 4.2.1 `QuestionAgent` 测试
 *   **用例1 (新项目)**: 输入初步的项目想法，验证 `QuestionAgent` 是否能生成合理的、逐步深入的问题。
@@ -222,7 +221,7 @@ await msg.update()
 *   **用例1 (新项目)**: 提供一份模拟的对话历史，验证 `PlanAgent` 能否生成结构清晰、内容相关的开发计划。
 *   **用例2 (现有项目)**: 提供一份包含代码分析和用户需求的模拟对话历史，验证计划的针对性。
 
-#### 4.2.3 `MainLab` 与 OceanBase 集成测试 (若适用)
+#### 4.2.3 `MainLab` 与 OceanBase 集成测试
 *   **用例1 (信息检索)**: 针对预存入 OceanBase 的项目代码片段，构造查询，验证 `MainLab` 是否能准确检索到相关信息。
 *   **用例2 (RAG 准确性)**: 结合 LLM，验证端到端的 RAG 流程能否针对特定代码问题给出正确答案。
 
@@ -240,5 +239,3 @@ await msg.update()
 *   **有效性**: 助手能够根据用户输入成功引导对话，并生成相关且有用的开发计划。对于现有项目，能够结合代码库信息进行有效分析。
 *   **可靠性**: 在各种正常和边界输入下，系统应保持稳定，不会轻易崩溃。错误处理机制（如无效的 GitHub 链接）能按预期工作。
 *   **用户体验**: Chainlit 界面交互流畅，消息传递清晰，流式输出响应及时。
-
-(实际测试结果需要根据具体的测试执行来填写。) 
